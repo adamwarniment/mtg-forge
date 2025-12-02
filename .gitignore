@@ -1,0 +1,15 @@
+# Ignore data directories
+data/
+
+# Ignore environment file
+.env
+
+# Ignore macOS files
+.DS_Store
+
+# Ignore IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
