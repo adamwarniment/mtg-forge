@@ -6,14 +6,17 @@ ENV DEBIAN_FRONTEND=noninteractive
 # Install dependencies
 RUN apt-get update && apt-get install -y \
     openjdk-17-jre \
+    openjdk-17-jdk \
     wget \
     unzip \
+    bzip2 \
     xvfb \
     x11vnc \
     fluxbox \
     websockify \
     supervisor \
     net-tools \
+    x11-utils \
     && rm -rf /var/lib/apt/lists/*
 
 # Install noVNC
@@ -27,20 +30,33 @@ ENV FORGE_VERSION=2.0.07
 ENV FORGE_HOME=/opt/forge
 ENV DISPLAY=:99
 
-RUN mkdir -p ${FORGE_HOME}
-WORKDIR ${FORGE_HOME}
-
-# Download Forge installer tarball
-RUN wget https://github.com/Card-Forge/forge/releases/download/forge-${FORGE_VERSION}/forge-installer-${FORGE_VERSION}.tar.bz2 -O forge.tar.bz2
-
-# Extract Forge
-RUN if [ -f forge.tar.bz2 ]; then tar -xjf forge.tar.bz2 --strip-components=1 && rm forge.tar.bz2; fi && \
-    if [ -f forge.tar.gz ]; then tar -xzf forge.tar.gz --strip-components=1 && rm forge.tar.gz; fi && \
-    chmod +x forge.sh 2>/dev/null || true
+# Download and install Forge using IzPack console mode
+RUN mkdir -p ${FORGE_HOME} && \
+    cd /tmp && \
+    # Download the installer JAR
+    wget https://github.com/Card-Forge/forge/releases/download/forge-${FORGE_VERSION}/forge-installer-${FORGE_VERSION}.jar -O forge-installer.jar && \
+    # Run installer in console mode with auto-install to FORGE_HOME
+    java -DINSTALL_PATH=${FORGE_HOME} -jar forge-installer.jar -console -options-system && \
+    # Clean up installer
+    rm -f forge-installer.jar && \
+    # List results
+    echo "=== Forge installation complete ===" && \
+    echo "=== Directory contents ===" && \
+    ls -lah ${FORGE_HOME}/ | head -30 && \
+    echo "=== JAR files found ===" && \
+    find ${FORGE_HOME} -name "*.jar" -type f | head -20
 
 # Create user for running applications
 RUN useradd -m -s /bin/bash -u 1000 ubuntu && \
-    echo "ubuntu:ubuntu" | chpasswd
+    echo "ubuntu:ubuntu" | chpasswd && \
+    chown -R ubuntu:ubuntu ${FORGE_HOME}
+
+# Create Fluxbox config directory and autostart script
+RUN mkdir -p /home/ubuntu/.fluxbox && \
+    chown -R ubuntu:ubuntu /home/ubuntu/.fluxbox
+COPY fluxbox-startup /home/ubuntu/.fluxbox/startup
+RUN chmod +x /home/ubuntu/.fluxbox/startup && \
+    chown ubuntu:ubuntu /home/ubuntu/.fluxbox/startup
 
 # Create supervisor config
 RUN mkdir -p /var/log/supervisor
@@ -53,9 +69,8 @@ RUN chmod +x /opt/bin/start-forge.sh
 # Expose noVNC port
 EXPOSE 8080
 
-# Set user
-USER ubuntu
+# Set working directory
 WORKDIR /home/ubuntu
 
-# Start supervisor
+# Start supervisor as root (it will manage user processes)
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

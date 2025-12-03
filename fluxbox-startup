@@ -1,0 +1,15 @@
+#!/bin/bash
+# Fluxbox autostart script
+
+# Wait a moment for the window manager to fully initialize
+sleep 2
+
+# The Forge application is already started by supervisor
+# This script just ensures any windows are properly managed
+# and can be used to set window properties if needed
+
+# Optional: Set background color to something neutral
+xsetroot -solid "#2b2b2b"
+
+# Keep the script running so Fluxbox doesn't exit
+exec fluxbox

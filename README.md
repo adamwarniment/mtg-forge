@@ -1,73 +1,99 @@
-# Forge WebRTC Docker Setup
+# MTG Forge - Docker Setup
 
-This project runs the Card-Forge/forge Java application in a web browser using Docker and noVNC.
+This Docker setup runs MTG Forge in a VNC workspace accessible via web browser.
 
 ## Quick Start
 
-1. **Clone or download this repository**
+### 1. Build the Docker Image
+```bash
+docker-compose build
+```
 
-2. **Copy the environment template:**
-   ```bash
-   cp .env.template .env
-   ```
+### 2. Start the Container
+```bash
+docker-compose up -d
+```
 
-3. **Edit `.env` if needed** (optional - defaults work for most cases)
+### 3. Access Forge
 
-4. **Start the container:**
-   ```bash
-   docker-compose up -d
-   ```
+Wait about 30 seconds for services to initialize, then open your browser:
 
-5. **Access Forge in your browser:**
-   Open `http://localhost:8080` in your web browser
-
-6. **Stop the container:**
-   ```bash
-   docker-compose down
-   ```
-
-## Data Persistence
-
-All Forge data is saved to the `./data` directory:
-- `./data/forge` - Game data, decks, settings
-- `./data/cache` - Cache files
-
-These directories are automatically created when you start the container. Your data will persist even if you remove and recreate the container.
+**Forge Web Interface**: http://localhost:8080
 
 ## Configuration
 
-Edit the `.env` file to customize:
-- `TZ` - Timezone (default: America/New_York)
-- `PUID` - User ID for file permissions (default: 1000)
-- `PGID` - Group ID for file permissions (default: 1000)
+### Mobile vs Desktop Version
 
-## Building from Source
+The startup script is configured to **prioritize the mobile version** of Forge:
+- First looks for: `forge-gui-mobile-dev-*.jar`
+- Then looks for: `forge-gui-mobile-*.jar`
+- Falls back to desktop version if mobile not found
 
+This allows you to use the mobile interface which may be better suited for web-based interaction.
+
+## Data Persistence
+
+Forge save data is mapped to the host machine:
+- `./data/forge` - Forge save data (`~/.local/share/forge`)
+- `./data/cache` - Forge cache (`~/.cache/forge`)
+
+## Resource Requirements
+
+- **RAM**: ~2GB
+- **CPU**: 1+ cores recommended
+- **Disk**: ~500MB for Forge installation + save data
+
+## Monitoring
+
+Check the status of all services:
 ```bash
-docker build -t ghcr.io/adamwarniment/forge-webrtc:latest .
+docker exec forge-webrtc supervisorctl status
+```
+
+View Forge logs:
+```bash
+docker logs forge-webrtc
+# or
+docker exec forge-webrtc tail -f /var/log/supervisor/forge.log
 ```
 
 ## Troubleshooting
 
-**Container won't start:**
-- Check logs: `docker-compose logs -f`
-- Ensure ports 8080 is not in use
+### Forge not loading
+1. Check supervisor status: `docker exec forge-webrtc supervisorctl status`
+2. All services should show `RUNNING`
+3. Check Forge logs: `docker exec forge-webrtc tail -f /var/log/supervisor/forge.log`
 
-**Can't connect to web interface:**
-- Wait 10-15 seconds after starting for services to initialize
-- Check that the container is running: `docker ps`
+### Port already in use
+If port 8080 is already in use, modify `docker-compose.yml`:
+```yaml
+ports:
+  - "8090:8080"  # Change 8090 to any available port
+```
 
-**Forge doesn't appear:**
-- Check Forge logs: `docker-compose logs -f forge`
-- The X server may need time to start
+### Restart Forge
+```bash
+docker exec forge-webrtc supervisorctl restart forge
+```
 
-## Architecture
+## Environment Variables
 
-This setup uses:
-- **Ubuntu 22.04** - Base OS
-- **Java 17** - Required for Forge
-- **Xvfb** - Virtual X server
-- **Fluxbox** - Lightweight window manager
-- **x11vnc** - VNC server
-- **noVNC** - Web-based VNC client
-- **Supervisor** - Process manager
+Create a `.env` file to customize settings:
+```env
+TZ=America/New_York
+PUID=1000
+PGID=1000
+FORGE_VERSION=2.0.07
+```
+
+## Stopping the Container
+
+```bash
+docker-compose down
+```
+
+To remove all data:
+```bash
+docker-compose down -v
+rm -rf ./data
+```
