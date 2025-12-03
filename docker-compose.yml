@@ -16,8 +16,9 @@ services:
     volumes:
       # Map Forge user data for persistence
       # Forge saves data in ~/.local/share/forge
-      - ./data/forge:/home/ubuntu/.local/share/forge
-      - ./data/cache:/home/ubuntu/.cache/forge
+      - ${FORGE_PARENT_DIR:-./data}/data:/home/ubuntu/.local/share/forge
+      - ${FORGE_PARENT_DIR:-./data}/user:/home/ubuntu/.forge
+      - ${FORGE_PARENT_DIR:-./data}/cache:/home/ubuntu/.cache/forge
       # Optionally map the entire home directory for full persistence
       # - ./data/home:/home/ubuntu
     shm_size: "512mb"

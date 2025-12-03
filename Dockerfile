@@ -64,7 +64,9 @@ RUN useradd -m -s /bin/bash -u 1000 ubuntu && \
 
 # Create Fluxbox config directory and autostart script
 RUN mkdir -p /home/ubuntu/.fluxbox && \
-    chown -R ubuntu:ubuntu /home/ubuntu/.fluxbox
+    mkdir -p /home/ubuntu/.forge/preferences && \
+    chown -R ubuntu:ubuntu /home/ubuntu/.fluxbox && \
+    chown -R ubuntu:ubuntu /home/ubuntu/.forge
 COPY fluxbox-startup /home/ubuntu/.fluxbox/startup
 RUN chmod +x /home/ubuntu/.fluxbox/startup && \
     chown ubuntu:ubuntu /home/ubuntu/.fluxbox/startup
