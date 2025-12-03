@@ -79,11 +79,15 @@ COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY start-forge.sh /opt/bin/start-forge.sh
 RUN chmod +x /opt/bin/start-forge.sh
 
+# Add initialization script
+COPY init.sh /opt/bin/init.sh
+RUN chmod +x /opt/bin/init.sh
+
 # Expose noVNC port
 EXPOSE 8080
 
 # Set working directory
 WORKDIR /home/ubuntu
 
-# Start supervisor as root (it will manage user processes)
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+# Start via init script to handle PUID/PGID
+ENTRYPOINT ["/opt/bin/init.sh"]
