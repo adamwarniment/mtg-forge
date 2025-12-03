@@ -25,6 +25,9 @@ RUN apt-get update && apt-get install -y \
     libgtk-3-0 \
     libcanberra-gtk-module \
     libcanberra-gtk3-module \
+    libgl1-mesa-glx \
+    libgl1-mesa-dri \
+    libasound2 \
     && rm -rf /var/lib/apt/lists/*
 
 # Install noVNC
