@@ -17,6 +17,14 @@ RUN apt-get update && apt-get install -y \
     supervisor \
     net-tools \
     x11-utils \
+    fontconfig \
+    libfreetype6 \
+    libxrender1 \
+    libxtst6 \
+    libxi6 \
+    libgtk-3-0 \
+    libcanberra-gtk-module \
+    libcanberra-gtk3-module \
     && rm -rf /var/lib/apt/lists/*
 
 # Install noVNC
