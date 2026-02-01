@@ -3,7 +3,8 @@ FROM ubuntu:22.04
 # Prevent interactive prompts during package installation
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install dependencies (Added mesa-utils for GPU and wmctrl for window management)
+# Install dependencies
+# Removed 'wmctrl' as we are now using native Fluxbox config
 RUN apt-get update && apt-get install -y \
     openjdk-17-jre \
     openjdk-17-jdk \
@@ -29,7 +30,6 @@ RUN apt-get update && apt-get install -y \
     libgl1-mesa-dri \
     libasound2 \
     mesa-utils \
-    wmctrl \
     && rm -rf /var/lib/apt/lists/*
 
 # Install noVNC
@@ -38,7 +38,7 @@ RUN mkdir -p /opt/noVNC/utils/websockify && \
     wget -qO- https://github.com/novnc/websockify/archive/refs/tags/v0.11.0.tar.gz | tar xz --strip 1 -C /opt/noVNC/utils/websockify && \
     ln -s /opt/noVNC/vnc.html /opt/noVNC/index.html
 
-# Inject iOS Native Meta Tags and CSS into noVNC for standalone web app feel
+# Inject iOS Native Meta Tags and CSS
 RUN sed -i '/<head>/a <meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">' /opt/noVNC/index.html && \
     sed -i '/<style>/a body { touch-action: none; overscroll-behavior: none; }' /opt/noVNC/app/styles/base.css
 
@@ -56,6 +56,19 @@ RUN mkdir -p ${FORGE_HOME} && \
 # Create config directories
 RUN mkdir -p /home/ubuntu/.fluxbox /home/ubuntu/.forge/preferences /var/log/supervisor && \
     chown -R ubuntu:ubuntu /home/ubuntu/.fluxbox /home/ubuntu/.forge /var/log/supervisor
+
+# --- NATIVE FLUXBOX CONFIGURATION (The Clean Fix) ---
+# Create the 'apps' file to enforce Kiosk Mode natively
+# [Deco] {NONE} -> Removes title bar and borders
+# [Maximized] {yes} -> Forces full screen
+# [Sticky] {yes} -> Ensures window is visible on ALL workspaces (prevents disappearing)
+RUN echo '[Group] \n\
+  (Name=Forge) \n\
+  [Deco] {NONE} \n\
+  [Maximized] {yes} \n\
+  [Sticky] {yes} \n\
+[end]' > /home/ubuntu/.fluxbox/apps && \
+    chown ubuntu:ubuntu /home/ubuntu/.fluxbox/apps
 
 COPY fluxbox-startup /home/ubuntu/.fluxbox/startup
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf

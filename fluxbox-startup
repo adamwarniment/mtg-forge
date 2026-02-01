@@ -1,26 +1,10 @@
 #!/bin/bash
 # Fluxbox autostart script
 
-# 1. Set background color
+# Set background color (visual polish)
 xsetroot -solid "#2b2b2b"
 
-# 2. Background loop to manage the Forge window once it appears
-(
-  # Wait for Fluxbox to initialize
-  sleep 2
-  # Limit to 1 workspace to prevent "disappearing" windows
-  fluxbox-remote "numworkspaces 1"
-
-  while true; do
-    # Check for the Forge window
-    if xwininfo -tree -root | grep -i "Forge" > /dev/null; then
-        # Force the window to be borderless and fill the 1133x744 canvas
-        wmctrl -r "Forge" -b add,maximized_vert,maximized_horz
-        wmctrl -r "Forge" -b add,fullscreen
-        break
-    fi
-    sleep 2
-  done
-) &
-
+# Start Fluxbox
+# The ~/.fluxbox/apps file created in Dockerfile will handle
+# the Kiosk mode (fullscreen/borderless) automatically.
 exec fluxbox
