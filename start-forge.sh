@@ -2,6 +2,8 @@
 set -e
 
 echo "--- Starting Forge Bootstrap ---"
+echo "Current User: $(whoami)"
+echo "Home Dir: $HOME"
 
 # Wait for X server
 echo "Waiting for X server..."
@@ -33,7 +35,7 @@ if [ ! -f "$MOBILE_JAR" ]; then
         java -DINSTALL_PATH=. -jar installer.jar -console -options-system
         rm installer.jar
     else
-        echo "ERROR: Download failed. The version '${FORGE_VERSION}' might not exist."
+        echo "ERROR: Download failed."
         exit 1
     fi
 fi
@@ -47,29 +49,46 @@ if [ -z "$JAR_FILE" ]; then
     JAR_FILE=$(find . -maxdepth 1 -name "forge-gui-desktop-*.jar" | head -n 1)
 fi
 
-# 3. Launch with Auto-Restore
+# 3. Launch with AGGRESSIVE Auto-Restore
 if [ -n "$JAR_FILE" ] && [ -f "$JAR_FILE" ]; then
     echo "Found JAR: $JAR_FILE"
     
-    # BACKGROUND TASK: Automate "Uncheck Iconify"
+    # BACKGROUND TASK: Aggressively wake the window up
     (
         echo "Waiting for window to appear..."
-        for i in {1..20}; do
-            # Check if window exists
+        for i in {1..30}; do
             if wmctrl -l | grep -i "Forge"; then
-                echo "Window found! Restoring from minimized state..."
-                wmctrl -R "Forge"                    # Raise & Restore (Un-minimize)
-                wmctrl -r "Forge" -b add,fullscreen  # Ensure Fullscreen
-                break
+                echo "Window found! Forcing wake up (Attempt $i)..."
+                
+                # Activate the window (Focus)
+                wmctrl -a "Forge"
+                
+                # Uncheck "Hidden" (Iconified)
+                wmctrl -r "Forge" -b remove,hidden
+                
+                # Uncheck "Shaded" (Rolled up)
+                wmctrl -r "Forge" -b remove,shaded
+                
+                # Force "Fullscreen"
+                wmctrl -r "Forge" -b add,fullscreen
+                
+                # Force "Maximize"
+                wmctrl -r "Forge" -b add,maximized_vert,maximized_horz
+
+                # Keep doing it for a few seconds to ensure it sticks
+                if [ $i -gt 5 ]; then
+                     echo "Window should be visible now."
+                     break
+                fi
             fi
-            sleep 2
+            sleep 1
         done
     ) &
 
-    # Launch without uiScale (Native Retina Resolution)
+    echo "Launching Java..."
     exec java ${_JAVA_OPTIONS} -jar "$JAR_FILE"
 else
-    echo "CRITICAL ERROR: No Forge JAR file found in /opt/forge"
+    echo "CRITICAL ERROR: No Forge JAR file found"
     ls -la
     exit 1
 fi
