@@ -4,7 +4,7 @@ FROM ubuntu:22.04
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Install dependencies
-# ADDED: wmctrl (Required for window automation)
+# REPLACED: fluxbox -> openbox
 RUN apt-get update && apt-get install -y \
     openjdk-17-jre \
     openjdk-17-jdk \
@@ -13,7 +13,7 @@ RUN apt-get update && apt-get install -y \
     bzip2 \
     xvfb \
     x11vnc \
-    fluxbox \
+    openbox \
     websockify \
     supervisor \
     net-tools \
@@ -55,28 +55,30 @@ RUN mkdir -p ${FORGE_HOME} && \
     chown -R ubuntu:ubuntu ${FORGE_HOME}
 
 # Create config directories
-RUN mkdir -p /home/ubuntu/.fluxbox /home/ubuntu/.forge/preferences /var/log/supervisor && \
-    chown -R ubuntu:ubuntu /home/ubuntu/.fluxbox /home/ubuntu/.forge /var/log/supervisor
+RUN mkdir -p /home/ubuntu/.config/openbox /home/ubuntu/.forge/preferences /var/log/supervisor && \
+    chown -R ubuntu:ubuntu /home/ubuntu/.config /home/ubuntu/.forge /var/log/supervisor
 
-# --- NATIVE FLUXBOX CONFIGURATION ---
-# [Iconic] {no} -> Tells Fluxbox "Do not minimize this window"
-# [Maximized] {yes} -> Forces full screen
-RUN echo '[Group] \n\
-  (Name=Forge) \n\
-  [Deco] {NONE} \n\
-  [Maximized] {yes} \n\
-  [Fullscreen] {yes} \n\
-  [Iconic] {no} \n\
-  [Layer] {2} \n\
-[end]' > /home/ubuntu/.fluxbox/apps && \
-    chown ubuntu:ubuntu /home/ubuntu/.fluxbox/apps
+# --- OPENBOX CONFIGURATION (The "Nuclear" Option) ---
+# Forces ALL windows to be maximized, undecorated, and non-iconified.
+RUN echo '<?xml version="1.0" encoding="UTF-8"?> \
+<openbox_config xmlns="http://openbox.org/3.4/rc"> \
+  <applications> \
+    <application class="*"> \
+      <decor>no</decor> \
+      <maximized>yes</maximized> \
+      <iconic>no</iconic> \
+      <layer>above</layer> \
+    </application> \
+  </applications> \
+</openbox_config>' > /home/ubuntu/.config/openbox/rc.xml && \
+    chown ubuntu:ubuntu /home/ubuntu/.config/openbox/rc.xml
 
-COPY fluxbox-startup /home/ubuntu/.fluxbox/startup
+# Note: We removed the COPY fluxbox-startup line as it is no longer needed
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY start-forge.sh /opt/bin/start-forge.sh
 COPY init.sh /opt/bin/init.sh
 
-RUN chmod +x /home/ubuntu/.fluxbox/startup /opt/bin/start-forge.sh /opt/bin/init.sh
+RUN chmod +x /opt/bin/start-forge.sh /opt/bin/init.sh
 
 EXPOSE 8080
 WORKDIR /home/ubuntu
