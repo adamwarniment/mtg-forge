@@ -4,6 +4,7 @@ FROM ubuntu:22.04
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Install dependencies
+# ADDED: wmctrl (Required for window automation)
 RUN apt-get update && apt-get install -y \
     openjdk-17-jre \
     openjdk-17-jdk \
@@ -58,12 +59,14 @@ RUN mkdir -p /home/ubuntu/.fluxbox /home/ubuntu/.forge/preferences /var/log/supe
     chown -R ubuntu:ubuntu /home/ubuntu/.fluxbox /home/ubuntu/.forge /var/log/supervisor
 
 # --- NATIVE FLUXBOX CONFIGURATION ---
-# Removed [Iconic] rule to let wmctrl handle state
+# [Iconic] {no} -> Tells Fluxbox "Do not minimize this window"
+# [Maximized] {yes} -> Forces full screen
 RUN echo '[Group] \n\
   (Name=Forge) \n\
   [Deco] {NONE} \n\
   [Maximized] {yes} \n\
   [Fullscreen] {yes} \n\
+  [Iconic] {no} \n\
   [Layer] {2} \n\
 [end]' > /home/ubuntu/.fluxbox/apps && \
     chown ubuntu:ubuntu /home/ubuntu/.fluxbox/apps
