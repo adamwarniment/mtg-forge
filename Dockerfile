@@ -4,7 +4,6 @@ FROM ubuntu:22.04
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Install dependencies
-# Removed 'wmctrl' as we are now using native Fluxbox config
 RUN apt-get update && apt-get install -y \
     openjdk-17-jre \
     openjdk-17-jdk \
@@ -58,10 +57,7 @@ RUN mkdir -p /home/ubuntu/.fluxbox /home/ubuntu/.forge/preferences /var/log/supe
     chown -R ubuntu:ubuntu /home/ubuntu/.fluxbox /home/ubuntu/.forge /var/log/supervisor
 
 # --- NATIVE FLUXBOX CONFIGURATION (The Clean Fix) ---
-# Create the 'apps' file to enforce Kiosk Mode natively
-# [Deco] {NONE} -> Removes title bar and borders
-# [Maximized] {yes} -> Forces full screen
-# [Sticky] {yes} -> Ensures window is visible on ALL workspaces (prevents disappearing)
+# Enforce Kiosk Mode natively
 RUN echo '[Group] \n\
   (Name=Forge) \n\
   [Deco] {NONE} \n\
