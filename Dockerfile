@@ -4,6 +4,7 @@ FROM ubuntu:22.04
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Install dependencies
+# ADDED: wmctrl (This is the tool that automates "Uncheck Iconify")
 RUN apt-get update && apt-get install -y \
     openjdk-17-jre \
     openjdk-17-jdk \
@@ -29,6 +30,7 @@ RUN apt-get update && apt-get install -y \
     libgl1-mesa-dri \
     libasound2 \
     mesa-utils \
+    wmctrl \
     && rm -rf /var/lib/apt/lists/*
 
 # Install noVNC
@@ -56,14 +58,15 @@ RUN mkdir -p ${FORGE_HOME} && \
 RUN mkdir -p /home/ubuntu/.fluxbox /home/ubuntu/.forge/preferences /var/log/supervisor && \
     chown -R ubuntu:ubuntu /home/ubuntu/.fluxbox /home/ubuntu/.forge /var/log/supervisor
 
-# --- NATIVE FLUXBOX CONFIGURATION (Stronger Kiosk Mode) ---
-# [Fullscreen] {yes} is the key addition here.
+# --- NATIVE FLUXBOX CONFIGURATION ---
+# [Iconic] {no} -> This is the setting for "Do not start minimized"
 RUN echo '[Group] \n\
   (Name=Forge) \n\
   [Deco] {NONE} \n\
   [Maximized] {yes} \n\
   [Fullscreen] {yes} \n\
-  [Sticky] {yes} \n\
+  [Iconic] {no} \n\
+  [Layer] {2} \n\
 [end]' > /home/ubuntu/.fluxbox/apps && \
     chown ubuntu:ubuntu /home/ubuntu/.fluxbox/apps
 
