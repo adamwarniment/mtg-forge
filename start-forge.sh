@@ -13,10 +13,9 @@ done
 
 cd /opt/forge
 
-# 1. Check for requested version and download if missing
-# This uses the installer to ensure all assets for the new version are present
+# 1. Download installer if requested version is completely missing
 if [ ! -f "forge-gui-desktop-${FORGE_VERSION}.jar" ] && [ ! -f "forge-gui-mobile-${FORGE_VERSION}-jar-with-dependencies.jar" ]; then
-    echo "Forge version ${FORGE_VERSION} not found. Downloading installer..."
+    echo "Forge version ${FORGE_VERSION} not found locally. Downloading installer..."
     wget -q "https://github.com/Card-Forge/forge/releases/download/forge-${FORGE_VERSION}/forge-installer-${FORGE_VERSION}.jar" -O installer.jar
     
     if [ $? -eq 0 ]; then
@@ -24,41 +23,37 @@ if [ ! -f "forge-gui-desktop-${FORGE_VERSION}.jar" ] && [ ! -f "forge-gui-mobile
         java -DINSTALL_PATH=. -jar installer.jar -console -options-system
         rm installer.jar
     else
-        echo "ERROR: Failed to download Forge ${FORGE_VERSION}."
+        echo "ERROR: Failed to download Forge ${FORGE_VERSION}. Exiting to prevent loop."
         exit 1
     fi
 fi
 
-# 2. Prioritize MOBILE version over desktop as per original requirements
-echo "Looking for Forge JAR files..."
+# 2. Prioritize MOBILE version for browser/mobile accessibility
+echo "Prioritizing mobile interface..."
 if [ -f "forge-gui-mobile-dev-${FORGE_VERSION}-jar-with-dependencies.jar" ]; then
     JAR_FILE="forge-gui-mobile-dev-${FORGE_VERSION}-jar-with-dependencies.jar"
 elif [ -f "forge-gui-mobile-${FORGE_VERSION}-jar-with-dependencies.jar" ]; then
     JAR_FILE="forge-gui-mobile-${FORGE_VERSION}-jar-with-dependencies.jar"
 else
-    # Fallback to finding any mobile JAR if the specific version string matches fail
+    # Fallback search for any mobile version
     JAR_FILE=$(find /opt/forge -name "forge-gui-mobile*.jar" | head -1)
     
-    # If no mobile JAR found, fall back to desktop versions
+    # Desktop fallbacks
     if [ -z "$JAR_FILE" ]; then
         if [ -f "forge-gui-desktop-${FORGE_VERSION}.jar" ]; then
             JAR_FILE="forge-gui-desktop-${FORGE_VERSION}.jar"
-        elif [ -f "forge-gui-desktop.jar" ]; then
-            JAR_FILE="forge-gui-desktop.jar"
         else
-            # Last resort: find any available forge JAR
-            JAR_FILE=$(find /opt/forge -name "forge*.jar" -o -name "Forge*.jar" | head -1)
+            JAR_FILE=$(find /opt/forge -name "forge-gui-desktop*.jar" | head -1)
         fi
     fi
 fi
 
-# 3. Launch with GPU and Memory optimizations
+# 3. Launch with optimizations
 if [ -n "$JAR_FILE" ] && [ -f "$JAR_FILE" ]; then
-    echo "Starting Forge using $JAR_FILE..."
-    # Uses _JAVA_OPTIONS for GPU/Memory provided in compose.yaml
+    echo "Starting Forge: $JAR_FILE"
+    # Uses _JAVA_OPTIONS for GPU and memory settings
     exec java ${_JAVA_OPTIONS} -jar "$JAR_FILE"
 else
-    echo "ERROR: No Forge JAR file found!"
-    ls -la /opt/forge
+    echo "ERROR: No suitable Forge JAR found in /opt/forge"
     exit 1
 fi
