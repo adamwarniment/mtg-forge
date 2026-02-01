@@ -56,12 +56,13 @@ RUN mkdir -p ${FORGE_HOME} && \
 RUN mkdir -p /home/ubuntu/.fluxbox /home/ubuntu/.forge/preferences /var/log/supervisor && \
     chown -R ubuntu:ubuntu /home/ubuntu/.fluxbox /home/ubuntu/.forge /var/log/supervisor
 
-# --- NATIVE FLUXBOX CONFIGURATION (The Clean Fix) ---
-# Enforce Kiosk Mode natively
+# --- NATIVE FLUXBOX CONFIGURATION (Stronger Kiosk Mode) ---
+# [Fullscreen] {yes} is the key addition here.
 RUN echo '[Group] \n\
   (Name=Forge) \n\
   [Deco] {NONE} \n\
   [Maximized] {yes} \n\
+  [Fullscreen] {yes} \n\
   [Sticky] {yes} \n\
 [end]' > /home/ubuntu/.fluxbox/apps && \
     chown ubuntu:ubuntu /home/ubuntu/.fluxbox/apps
