@@ -22,7 +22,7 @@ cd /opt/forge
 # Define the expected mobile jar name
 MOBILE_JAR="forge-gui-mobile-${FORGE_VERSION}-jar-with-dependencies.jar"
 
-# 1. Download installer if missing
+# 1. Download if missing
 if [ ! -f "$MOBILE_JAR" ]; then
     echo "Mobile JAR ($MOBILE_JAR) not found. Downloading installer..."
     
@@ -44,8 +44,6 @@ if [ ! -f "$MOBILE_JAR" ]; then
         rm installer.jar
     else
         echo "ERROR: Download failed. The version '${FORGE_VERSION}' might not exist on GitHub Releases."
-        echo "Please check: https://github.com/Card-Forge/forge/releases"
-        # We exit here to stop the crash loop and let you see the log
         exit 1
     fi
 fi
@@ -67,6 +65,10 @@ fi
 if [ -n "$JAR_FILE" ] && [ -f "$JAR_FILE" ]; then
     echo "Found JAR: $JAR_FILE"
     echo "Launching Java with options: ${_JAVA_OPTIONS}"
+    
+    # Force a Fluxbox restart after 10 seconds to ensure the window snaps to fullscreen
+    (sleep 15 && fluxbox-remote restart) &
+    
     exec java ${_JAVA_OPTIONS} -Dglass.gtk.uiScale=1.0 -jar "$JAR_FILE"
 else
     echo "CRITICAL ERROR: No Forge JAR file found in /opt/forge"
