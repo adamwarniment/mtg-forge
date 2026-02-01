@@ -1,15 +1,24 @@
 #!/bin/bash
 # Fluxbox autostart script
 
-# Wait a moment for the window manager to fully initialize
-sleep 2
+# 1. Disable all workspaces except one to prevent windows "hiding" in other workspaces
+fluxbox-remote "numworkspaces 1"
 
-# The Forge application is already started by supervisor
-# This script just ensures any windows are properly managed
-# and can be used to set window properties if needed
-
-# Optional: Set background color to something neutral
+# 2. Set background color to match Forge dark mode
 xsetroot -solid "#2b2b2b"
 
-# Keep the script running so Fluxbox doesn't exit
+# 3. Wait for the Forge window to appear, then strip borders and maximize
+(
+  while true; do
+    # Check if a window with "Forge" in the title exists
+    if xwininfo -tree -root | grep -i "Forge" > /dev/null; then
+        # Remove title bars/borders and force fullscreen/maximization
+        wmctrl -r "Forge" -b add,maximized_vert,maximized_horz
+        wmctrl -r "Forge" -b add,fullscreen
+        break
+    fi
+    sleep 2
+  done
+) &
+
 exec fluxbox
