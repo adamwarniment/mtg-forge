@@ -2,6 +2,8 @@
 set -e
 
 echo "--- Starting Forge Bootstrap ---"
+echo "Current User: $(whoami)"
+echo "Home Dir: $HOME"
 
 # Wait for X server
 echo "Waiting for X server..."
@@ -24,6 +26,10 @@ MOBILE_JAR="forge-gui-mobile-${FORGE_VERSION}-jar-with-dependencies.jar"
 if [ ! -f "$MOBILE_JAR" ]; then
     echo "Mobile JAR ($MOBILE_JAR) not found. Downloading installer..."
     
+    # Construct URL
+    DOWNLOAD_URL="https://github.com/Card-Forge/forge/releases/download/forge-${FORGE_VERSION}/forge-installer-${FORGE_VERSION}.jar"
+    echo "Attempting download from: $DOWNLOAD_URL"
+    
     # Check write permissions
     if [ ! -w . ]; then
         echo "ERROR: /opt/forge is not writable. Check volume permissions."
@@ -31,14 +37,20 @@ if [ ! -f "$MOBILE_JAR" ]; then
         exit 1
     fi
 
-    wget -q "https://github.com/Card-Forge/forge/releases/download/forge-${FORGE_VERSION}/forge-installer-${FORGE_VERSION}.jar" -O installer.jar || { echo "ERROR: Download failed."; exit 1; }
-    
-    echo "Running headless installation..."
-    java -DINSTALL_PATH=. -jar installer.jar -console -options-system || { echo "ERROR: Installation failed."; exit 1; }
-    rm installer.jar
+    # Try download
+    if wget -q "$DOWNLOAD_URL" -O installer.jar; then
+        echo "Installer downloaded. Installing..."
+        java -DINSTALL_PATH=. -jar installer.jar -console -options-system
+        rm installer.jar
+    else
+        echo "ERROR: Download failed. The version '${FORGE_VERSION}' might not exist on GitHub Releases."
+        echo "Please check: https://github.com/Card-Forge/forge/releases"
+        # We exit here to stop the crash loop and let you see the log
+        exit 1
+    fi
 fi
 
-# 2. Find the JAR to run (Robust Find)
+# 2. Find the JAR to run
 echo "Searching for JAR files..."
 JAR_FILE=$(find . -maxdepth 1 -name "forge-gui-mobile-${FORGE_VERSION}*.jar" | head -n 1)
 
