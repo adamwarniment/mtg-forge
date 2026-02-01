@@ -19,9 +19,12 @@ if [ "$(id -u ubuntu)" != "$PUID" ]; then
     usermod -o -u "$PUID" ubuntu
 fi
 
-# Ensure permissions are correct for critical directories
-echo "Fixing permissions..."
+# Fix permissions for HOME
+echo "Fixing permissions for /home/ubuntu..."
 chown -R ubuntu:ubuntu /home/ubuntu
+
+# --- CRITICAL FIX: Fix permissions for the Persistence Volume ---
+echo "Fixing permissions for /opt/forge..."
 chown -R ubuntu:ubuntu /opt/forge
 
 # Start Supervisor
